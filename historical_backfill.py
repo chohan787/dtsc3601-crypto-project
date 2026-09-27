@@ -24,7 +24,7 @@ DAYS_OF_HISTORY = 365
 CANDLES_PER_DAY = 24 * 4
 TOTAL_CANDLES = DAYS_OF_HISTORY * CANDLES_PER_DAY
 
-# Binance.US allows at most 1000 klines per request
+# Binance.US allows at most 1000k lines per request
 REQUEST_LIMIT = 1000
 
 INTERVAL_MS = 15 * 60_000
