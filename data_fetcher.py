@@ -11,8 +11,9 @@ AWS_PROFILE = "dtsc3601-crypto"
 BINANCE_URL = "https://api.binance.us/api/v3/klines"
 
 SYMBOL = "BTCUSDT"
-INTERVAL = "1m"
-LIMIT = 5
+INTERVAL = "15m"
+# The feature pipeline uses 15-minute bars and needs trailing history.
+LIMIT = 120
 
 
 def milliseconds_to_utc(timestamp_ms):
@@ -64,7 +65,10 @@ def get_binance_data():
             "volume": float(candle[5]),
             "close_time": candle[6],
             "close_time_utc": milliseconds_to_utc(candle[6]),
-            "number_of_trades": candle[8]
+            "quote_asset_volume": float(candle[7]),
+            "number_of_trades": candle[8],
+            "taker_buy_base_asset_volume": float(candle[9]),
+            "taker_buy_quote_asset_volume": float(candle[10])
         }
 
         formatted_data.append(formatted_candle)

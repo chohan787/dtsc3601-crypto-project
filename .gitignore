@@ -18,3 +18,7 @@ venv/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Generated local datasets and trained model artifacts
+data/
+models/

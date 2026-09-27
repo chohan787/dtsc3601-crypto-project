@@ -17,17 +17,17 @@ AWS_PROFILE = "dtsc3601-crypto"
 BINANCE_URL = "https://api.binance.us/api/v3/klines"
 
 SYMBOL = "BTCUSDT"
-INTERVAL = "1m"
+INTERVAL = "15m"
 
-# Seven days of one-minute candles
-DAYS_OF_HISTORY = 7
-CANDLES_PER_DAY = 24 * 60
+# One year of 15-minute candles
+DAYS_OF_HISTORY = 365
+CANDLES_PER_DAY = 24 * 4
 TOTAL_CANDLES = DAYS_OF_HISTORY * CANDLES_PER_DAY
 
 # Binance.US allows at most 1000 klines per request
 REQUEST_LIMIT = 1000
 
-ONE_MINUTE_MS = 60_000
+INTERVAL_MS = 15 * 60_000
 
 
 def milliseconds_to_utc(timestamp_ms):
@@ -49,25 +49,21 @@ def get_time_range():
 
     now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
 
-    current_minute_open = (
-        now_ms // ONE_MINUTE_MS
-    ) * ONE_MINUTE_MS
+    current_interval_open = (now_ms // INTERVAL_MS) * INTERVAL_MS
 
-    latest_completed_open = (
-        current_minute_open - ONE_MINUTE_MS
-    )
+    latest_completed_open = current_interval_open - INTERVAL_MS
 
     start_time = latest_completed_open - (
-        (TOTAL_CANDLES - 1) * ONE_MINUTE_MS
+        (TOTAL_CANDLES - 1) * INTERVAL_MS
     )
 
-    end_time = latest_completed_open + ONE_MINUTE_MS - 1
+    end_time = latest_completed_open + INTERVAL_MS - 1
 
     return start_time, end_time
 
 
 def fetch_historical_data():
-    """Download seven days of completed BTCUSDT one-minute candles."""
+    """Download one year of completed BTCUSDT 15-minute candles."""
 
     start_time, end_time = get_time_range()
 
@@ -132,7 +128,7 @@ def fetch_historical_data():
 
         last_open_time = batch[-1][0]
 
-        current_start = last_open_time + ONE_MINUTE_MS
+        current_start = last_open_time + INTERVAL_MS
 
         print(
             f"Downloaded {len(all_candles)} "
@@ -177,7 +173,7 @@ def upload_to_s3(csv_data, candle_count):
 
     file_key = (
         f"historical/binance/{SYMBOL}/{INTERVAL}/"
-        f"btcusdt_1m_{DAYS_OF_HISTORY}d.csv"
+        f"btcusdt_15m_1y.csv"
     )
 
     s3.put_object(

@@ -11,10 +11,7 @@ import pandas as pd
 BUCKET_NAME = "dtsc3601-cryptobros-project-879022683465-us-east-2-an"
 AWS_PROFILE = "dtsc3601-crypto"
 
-S3_KEY = (
-    "historical/binance/BTCUSDT/1m/"
-    "btcusdt_1m_7d.csv"
-)
+S3_KEY = "historical/binance/BTCUSDT/15m/btcusdt_15m_1y.csv"
 
 
 def load_data_from_s3():
@@ -51,14 +48,17 @@ def prepare_dataframe(dataframe):
     for feature engineering and model development.
     """
 
+    dataframe = dataframe.copy()
     dataframe["open_time_utc"] = pd.to_datetime(
         dataframe["open_time_utc"],
-        utc=True
+        utc=True,
+        format="mixed",
     )
 
     dataframe["close_time_utc"] = pd.to_datetime(
         dataframe["close_time_utc"],
-        utc=True
+        utc=True,
+        format="mixed",
     )
 
     dataframe = dataframe.sort_values(

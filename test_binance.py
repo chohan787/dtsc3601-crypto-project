@@ -4,7 +4,7 @@ url = "https://api.binance.us/api/v3/klines"
 
 params = {
     "symbol": "BTCUSDT",
-    "interval": "1m",
+    "interval": "15m",
     "limit": 5
 }
 
