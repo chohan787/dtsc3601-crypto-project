@@ -17,6 +17,7 @@ LIMIT = 120
 
 
 def milliseconds_to_utc(timestamp_ms):
+    """Convert a Binance millisecond timestamp into an ISO UTC string."""
     return datetime.fromtimestamp(
         timestamp_ms / 1000,
         tz=timezone.utc
@@ -24,6 +25,18 @@ def milliseconds_to_utc(timestamp_ms):
 
 
 def get_binance_data():
+    """Fetch the latest completed BTCUSDT candles from Binance.US.
+
+    One extra candle is requested so an in-progress candle can be removed.
+    The returned rolling window gives the feature pipeline enough history for
+    indicators such as RSI, moving averages, and volatility.
+
+    Returns:
+        A list of normalized candle dictionaries.
+
+    Raises:
+        requests.HTTPError: If Binance.US returns an unsuccessful response.
+    """
     params = {
         "symbol": SYMBOL,
         "interval": INTERVAL,
@@ -77,6 +90,7 @@ def get_binance_data():
 
 
 def upload_to_s3(data):
+    """Store a live Binance response as a timestamped JSON object in S3."""
     session = boto3.Session(profile_name=AWS_PROFILE)
     s3 = session.client("s3")
 
@@ -105,6 +119,7 @@ def upload_to_s3(data):
 
 
 def main():
+    """Fetch recent market data and upload it to the raw S3 location."""
     data = get_binance_data()
 
     print(f"Retrieved {len(data)} completed candles from Binance.US")

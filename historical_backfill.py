@@ -40,12 +40,7 @@ def milliseconds_to_utc(timestamp_ms):
 
 
 def get_time_range():
-    """
-    Determine the exact seven-day period to retrieve.
-
-    The ending candle is the most recent fully completed
-    one-minute candle.
-    """
+    """Return timestamps covering one year of completed 15-minute candles."""
 
     now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
 
@@ -63,7 +58,18 @@ def get_time_range():
 
 
 def fetch_historical_data():
-    """Download one year of completed BTCUSDT 15-minute candles."""
+    """Download one year of completed BTCUSDT 15-minute candles.
+
+    Binance returns at most 1,000 candles per request, so this function
+    advances the request start time after every batch until the requested
+    period is complete.
+
+    Returns:
+        A list of normalized candle dictionaries ready for CSV output.
+
+    Raises:
+        requests.HTTPError: If a Binance request fails.
+    """
 
     start_time, end_time = get_time_range()
 
@@ -142,7 +148,17 @@ def fetch_historical_data():
 
 
 def convert_to_csv(data):
-    """Convert the historical candle records to CSV text."""
+    """Convert normalized candle dictionaries into CSV text.
+
+    Args:
+        data: Non-empty list of records with matching keys.
+
+    Returns:
+        CSV text including a header row.
+
+    Raises:
+        ValueError: If no candle records were provided.
+    """
 
     if not data:
         raise ValueError("No historical data was downloaded.")
@@ -163,7 +179,12 @@ def convert_to_csv(data):
 
 
 def upload_to_s3(csv_data, candle_count):
-    """Upload the historical CSV dataset to the project S3 bucket."""
+    """Upload the historical CSV dataset to its configured S3 key.
+
+    Args:
+        csv_data: Complete CSV text for the historical dataset.
+        candle_count: Number of candle records included in the CSV.
+    """
 
     session = boto3.Session(
         profile_name=AWS_PROFILE
@@ -190,6 +211,7 @@ def upload_to_s3(csv_data, candle_count):
 
 
 def main():
+    """Run the historical download, conversion, and S3 upload workflow."""
     data = fetch_historical_data()
 
     print()

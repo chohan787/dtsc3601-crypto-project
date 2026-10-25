@@ -29,7 +29,23 @@ FEATURE_COLUMNS = [
 
 
 def aggregate_candles(dataframe: pd.DataFrame, timeframe: str = "15min") -> pd.DataFrame:
-    """Aggregate completed OHLCV candles into model bars."""
+    """Combine smaller candles into the time interval used by the model.
+
+    The input must contain completed candle timestamps and OHLCV columns.
+    Price fields are aggregated as open, high, low, and close, while volume
+    and available trading-activity fields are summed. The returned rows are
+    sorted by timestamp and contain one row per completed model interval.
+
+    Args:
+        dataframe: Raw candle records from S3 or the Binance API.
+        timeframe: Pandas time interval, such as ``"15min"``.
+
+    Returns:
+        A DataFrame containing model-timeframe OHLCV bars.
+
+    Raises:
+        ValueError: If a required candle column is missing.
+    """
     required = {"open_time_utc", "open", "high", "low", "close", "volume"}
     missing = required.difference(dataframe.columns)
     if missing:
@@ -67,10 +83,24 @@ def create_features(
     include_target: bool = True,
     flat_threshold: float = 0.001,
 ) -> pd.DataFrame:
-    """Create leakage-safe technical and market-activity features.
+    """Create the features and optional target used by the classifier.
 
-    The target is -1 (down), 0 (flat), or 1 (up) based on the future return.
-    The flat threshold avoids treating insignificant price noise as a signal.
+    Every feature is calculated from the current bar or earlier bars, so future
+    prices do not leak into the model inputs. When enabled, the target is -1
+    (down), 0 (flat), or 1 (up), based on the future close at the requested
+    horizon. A flat threshold prevents insignificant price noise from being
+    treated as a meaningful direction.
+
+    Args:
+        dataframe: Raw candle records to aggregate and transform.
+        timeframe: Interval used to build model bars.
+        horizon_bars: Number of model bars ahead used to create the target.
+        include_target: Whether to add and validate the future target columns.
+        flat_threshold: Minimum absolute future return for UP or DOWN.
+
+    Returns:
+        A clean DataFrame containing feature columns, bar data, and, when
+        requested, ``target`` and ``future_return``.
     """
     bars = aggregate_candles(dataframe, timeframe=timeframe)
     close = bars["close"]
@@ -138,7 +168,21 @@ def create_features(
 
 
 def latest_feature_row(dataframe: pd.DataFrame, timeframe: str = "15min") -> pd.DataFrame:
-    """Return one inference row with the exact training feature columns."""
+    """Build the newest feature row for a live prediction.
+
+    The complete input window is required because trailing indicators need
+    historical candles. Only the newest completed row is returned to the model.
+
+    Args:
+        dataframe: Recent completed candles from the live API.
+        timeframe: Interval used by the trained model.
+
+    Returns:
+        A one-row DataFrame with the latest feature values.
+
+    Raises:
+        ValueError: If the input window is too short to create features.
+    """
     features = create_features(dataframe, timeframe=timeframe, include_target=False)
     if features.empty:
         raise ValueError("Not enough completed candles to create model features.")
@@ -146,4 +190,5 @@ def latest_feature_row(dataframe: pd.DataFrame, timeframe: str = "15min") -> pd.
 
 
 def feature_names() -> Iterable[str]:
+    """Return the feature names in the order expected by the model."""
     return tuple(FEATURE_COLUMNS)
