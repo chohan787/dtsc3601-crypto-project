@@ -20,5 +20,6 @@ venv/
 Thumbs.db
 
 # Generated local datasets and trained model artifacts
-data/
+data/*
+!data/sample_btcusdt_15m.csv
 models/
