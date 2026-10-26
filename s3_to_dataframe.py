@@ -11,16 +11,17 @@ import pandas as pd
 BUCKET_NAME = "dtsc3601-cryptobros-project-879022683465-us-east-2-an"
 AWS_PROFILE = "dtsc3601-crypto"
 
-S3_KEY = (
-    "historical/binance/BTCUSDT/1m/"
-    "btcusdt_1m_7d.csv"
-)
+S3_KEY = "historical/binance/BTCUSDT/15m/btcusdt_15m_1y.csv"
 
 
 def load_data_from_s3():
-    """
-    Load the historical BTCUSDT dataset from S3
-    into a pandas DataFrame.
+    """Download the configured historical CSV from S3 into pandas.
+
+    Returns:
+        The raw historical candle DataFrame as stored in the S3 object.
+
+    Raises:
+        botocore.exceptions.ClientError: If the bucket or object cannot be read.
     """
 
     session = boto3.Session(
@@ -46,19 +47,28 @@ def load_data_from_s3():
 
 
 def prepare_dataframe(dataframe):
-    """
-    Perform basic preparation so the dataset is ready
-    for feature engineering and model development.
+    """Normalize timestamps and sort candles for downstream processing.
+
+    A copy is returned so callers do not have their original DataFrame changed.
+
+    Args:
+        dataframe: Raw candle DataFrame loaded from S3 or the API.
+
+    Returns:
+        A timestamp-normalized, chronologically sorted DataFrame.
     """
 
+    dataframe = dataframe.copy()
     dataframe["open_time_utc"] = pd.to_datetime(
         dataframe["open_time_utc"],
-        utc=True
+        utc=True,
+        format="mixed",
     )
 
     dataframe["close_time_utc"] = pd.to_datetime(
         dataframe["close_time_utc"],
-        utc=True
+        utc=True,
+        format="mixed",
     )
 
     dataframe = dataframe.sort_values(
@@ -73,6 +83,7 @@ def prepare_dataframe(dataframe):
 
 
 def main():
+    """Load the S3 dataset and print a basic inspection summary."""
     dataframe = load_data_from_s3()
 
     dataframe = prepare_dataframe(
