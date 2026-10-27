@@ -93,8 +93,8 @@ def create_features(
 
     Args:
         dataframe: Raw candle records to aggregate and transform.
-        timeframe: Interval used to build model bars.
-        horizon_bars: Number of model bars ahead used to create the target.
+        timeframe: Interval is used to build model bars.
+        horizon_bars: Number of model bars ahead are used to create the target.
         include_target: Whether to add and validate the future target columns.
         flat_threshold: Minimum absolute future return for UP or DOWN.
 
