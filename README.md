@@ -4,10 +4,6 @@ This project collects BTCUSDT market data from Binance.US, stores historical
 data in Amazon S3, creates prediction features, and trains a model to predict
 whether BTCUSDT will move **up**, **down**, or remain **flat**.
 
-The project is an extension of the initial data-ingestion work. It now includes
-the feature pipeline, model training, validation, and a live-style prediction
-example.
-
 ## What the model predicts
 
 The model uses completed 15-minute candles and predicts the direction of the
